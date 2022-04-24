@@ -1,0 +1,7 @@
+*
+!/.git*
+!/*.c
+!/*.cpp
+!/*.h
+!/*.ui
+!/CMakeLists.txt
