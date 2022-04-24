@@ -2,6 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QFile>
+#include <QFileDialog>
+#include <string>
+#include "buisness_logic.h"
+
+using namespace std;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,7 +21,12 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_pushButton_file_clicked();
+
 private:
     Ui::MainWindow *ui;
+    vector<string> dataVector;
+    void print_json();
 };
 #endif // MAINWINDOW_H
