@@ -43,3 +43,16 @@ void MainWindow::print_json()
         text.append(QString::fromStdString(i) + "\n");
     ui->json_text->setText(text);
 }
+
+void MainWindow::on_pushButton_check_clicked()
+{
+    if (!interfaceBundle(CHECK, NULL, NULL, &dataVector))
+    {
+        ui->textBrowser_name_file->setText("Error check");
+    }
+    else
+    {
+         ui->textBrowser_name_file->setText("OK");
+    }
+}
+

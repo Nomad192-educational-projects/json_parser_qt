@@ -24,6 +24,8 @@ public:
 private slots:
     void on_pushButton_file_clicked();
 
+    void on_pushButton_check_clicked();
+
 private:
     Ui::MainWindow *ui;
     vector<string> dataVector;
