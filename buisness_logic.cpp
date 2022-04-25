@@ -277,15 +277,11 @@ static vector<Object_field *> *scanObj(stringstream *input)
     }
     while(input->get(ch))
     {
+        cout << "Char while = \"" << ch << "\"" << endl;
         input->unget();
         while(input->get(ch))
-        {
             if(ch != ' ' && ch != '\n' && ch != '\t')
-            {
-                input->unget();
                 break;
-            }
-        }
 
         cout << "Char:\'" << ch << "\'" << endl;
         if(ch == '}')
