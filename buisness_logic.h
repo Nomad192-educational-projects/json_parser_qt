@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <memory>
 
 using namespace std;
 
@@ -14,6 +15,6 @@ enum compilation{
    CHECK,
 };
 
-bool interfaceBundle(enum compilation comp, void *req, void *answer,  vector<string> *dataVector);
+bool interfaceBundle(enum compilation comp, string nameFile,  vector<string> &dataVector);
 
 #endif // BUISNESS_LOGIC_H

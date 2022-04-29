@@ -1,23 +1,23 @@
 #include "buisness_logic.h"
 
-static bool openFile(string *nameFile,  vector<string> *dataVector);
-static bool checkCorrect(vector<string> *dataVector);
+static bool openFile(string nameFile,  vector<string> &dataVector);
+static bool checkCorrect(vector<string> &dataVector);
 
-bool interfaceBundle(enum compilation comp, void *req, void *answer,  vector<string> *dataVector){
+bool interfaceBundle(enum compilation comp, string nameFile,  vector<string> &dataVector){
     bool result;
     switch (comp){
-        case OPEN_FILE: result = openFile((string*)req, dataVector); break;
+        case OPEN_FILE: result = openFile(nameFile, dataVector); break;
         case CHECK:     result = checkCorrect(dataVector); break;
     }
     return result;
 }
 
-static bool openFile(string *nameFile, vector<string> *dataVector){
-    fstream dataFile(*nameFile, ios::in);
+static bool openFile(string nameFile, vector<string> &dataVector){
+    fstream dataFile(nameFile, ios::in);
     bool result = false;
     if(dataFile.is_open()){
         result = true;
-        for(string line; getline(dataFile, line); dataVector->push_back(line));
+        for(string line; getline(dataFile, line); dataVector.push_back(line));
         dataFile.close();
     }
     return result;
@@ -33,111 +33,113 @@ enum Element_Type{
     OB_NULL,
 };
 
-struct Object_field;
+class Object_field;
+class Element;
 
 class Element
 {
 private:
     Element_Type type;
-    void *value;
+    //void *value;
+    unique_ptr<void, void(*)(void*)> value;
 
 public:
-    Element(Element_Type type, void *value) : type(type), value(value)
+    Element(Element_Type type, unique_ptr<void, void(*)(void*)> value) : type(type), value(move(value))
     {
         /*switch(type)
         {
-            case STRING:    value = new string;                 break;
-            case NUMBER:    value = new double;                 break;
-            case OBJECT:    value = new vector<Object_field>;   break;
-            case ARRAY:     value = new vector<Element>;        break;
-            case OB_TRUE:   value = NULL;                       break;
-            case OB_FALSE:  value = NULL;                       break;
-            case OB_NULL:   value = NULL;                       break;
+            case STRING:    value = make_unique<string>();                  break;
+            case NUMBER:    value = make_unique<double>();                  break;
+            case OBJECT:    value = make_unique<vector<Object_field>>();    break;
+            case ARRAY:     value = make_unique<vector<Element>>();         break;
+            case OB_TRUE:   value = NULL;                                   break;
+            case OB_FALSE:  value = NULL;                                   break;
+            case OB_NULL:   value = NULL;                                   break;
         }*/
     }
 
-    ~Element()
+    /*~Element()
     {
         switch(type)
         {
             case STRING:    delete (string*)(value);                break;
             case NUMBER:    delete (double*)(value);                break;
-            case OBJECT:    delete (vector<Object_field *>*)(value);  break;
-            case ARRAY:     delete (vector<Element *>*)(value);       break;
+            case OBJECT:    delete (vector<unique_ptr<Object_field>> *) (value);  break;
+            case ARRAY:     delete (vector<unique_ptr<Element>>*)(value);       break;
             case OB_TRUE:                                           break;
             case OB_FALSE:                                          break;
             case OB_NULL:                                           break;
         }
-    }
+    }*/
 };
 
 class Object_field
 {
 private:
     string key;
-    Element *element;
+    unique_ptr<Element> element;
 
 public:
-    Object_field(string key, Element *element)
-    {
-        this->key = key;
-        this->element = element;
-    }
-    ~Object_field()
+    Object_field(string key, unique_ptr<Element> element) : key(key), element(move(element)) {}
+    /*~Object_field()
     {
         delete element;
-    }
+    }*/
 };
 
-static string *scanStr(stringstream *input)
+static unique_ptr<string> scanStr(stringstream &input)
 {
     cout << "Scan str:" << endl;
-    string *result = new string;
+    unique_ptr<string> result = make_unique<string>();
     char c;
-    while(input->get(c))
+    while(input.get(c))
     {
         if(c == '\"')
             break;
     }
-    while(input->get(c))
+    while(input.get(c))
     {
         if(c == '\"')
         {
             cout << "End scan str, res=\"" << *result << "\"" << endl;
-            return result;
+            return move(result);
         }
         (*result) += c;
         cout << "Scan str char:\'" << c << "\'" << endl;
     }
-    delete result;
-    return NULL;
+    //delete result;
+    return nullptr;
 }
 
-static vector<Object_field *> *scanObj(stringstream *input);
+static unique_ptr<vector<unique_ptr<Object_field>>> scanObj(stringstream &input);
 
-static Element *scanEl(stringstream *input)
+static unique_ptr<Element> scanEl(stringstream &input)
 {
     cout << "Scan el" << endl;
-    Element *result;
+    unique_ptr<Element> result;
     char c;
-    while(input->get(c))
+    while(input.get(c))
     {
         if(c != ' ' && c != '\n' && c != '\t')
             break;
     }
     /*if(!input->get(c))
     {
-        return NULL;
+        return nullptr;
     }*/
     if (c >= '0' && c <= '9')
     {
         cout << "Number" << endl;
 
-        input->unget();
-        double *value = new double;
-        (*input) >> (*value);
+        input.unget();
+        unique_ptr<double> value = make_unique<double>();
+        input >> *value;
         cout << "Double val=" << *value << endl;
-        result = new Element(Element_Type{NUMBER}, value);
+        unique_ptr<void, void(*)(void*)> new_val(value.release(), [](void* ptr)
+            {
+                delete (double*)ptr;
+            });
+        result = make_unique<Element>(Element_Type{NUMBER}, move(new_val));
     }
     else
     {
@@ -146,114 +148,138 @@ static Element *scanEl(stringstream *input)
             case '\"':
             {
                 cout << "String" << endl;
-                input->unget();
-                string *value;
-                if((value = scanStr(input)) == NULL)
+                input.unget();
+                unique_ptr<string> value = make_unique<string>();
+                //string *value;
+                if((value = scanStr(input)).get() == nullptr)
                 {
-                    return NULL;
+                    return nullptr;
                 }
-                result = new Element(Element_Type{STRING}, value);
+                unique_ptr<void, void(*)(void*)> new_val(value.release(), [](void* ptr)
+                    {
+                        delete (string*)ptr;
+                    });
+                result = make_unique<Element>(Element_Type{STRING}, move(new_val));
                 break;
             }
             case '{':
             {
                 cout << "Object" << endl;
-                input->unget();
-                vector<Object_field *> *value;
-                if((value = scanObj(input)) == NULL)
+                input.unget();
+                unique_ptr<vector<unique_ptr<Object_field>>> value;
+                if((value = scanObj(input)).get() == nullptr)
                 {
-                    return NULL;
+                    return nullptr;
                 }
-                result = new Element(Element_Type{OBJECT}, value);
+                unique_ptr<void, void(*)(void*)> new_val(value.release(), [](void* ptr)
+                    {
+                        delete (vector<unique_ptr<Object_field>>*)ptr;
+                    });
+                result = make_unique<Element>(Element_Type{OBJECT}, move(new_val));
                 break;
             }
             case '[':
             {
                 cout << "Array" << endl;
-                vector <Element *> *value = new vector<Element *>;
-                input->unget();
+                unique_ptr<vector<unique_ptr<Element>>> value = make_unique<vector<unique_ptr<Element>>>();
+                input.unget();
                 char ch;
-                while(input->get(ch))
+                while(input.get(ch))
                 {
                     if(ch == ']')
                         break;
                     else if(ch != ',' && ch != '[')
                     {
-                        delete value;
-                        return NULL;
+                        //delete value;
+                        return nullptr;
                     }
-                    Element *buffer;
-                    if((buffer = scanEl(input)) == NULL)
+                    unique_ptr<Element> buffer;
+                    if((buffer = scanEl(input)).get() == nullptr)
                     {
-                        delete value;
-                        return NULL;
+                        //delete value;
+                        return nullptr;
                     }
                     cout << "Array el ok" << endl;
-                    value->push_back(buffer);
+                    value->push_back(move(buffer));
                     cout << "Array el push ok" << endl;
                 }
                 if(ch != ']')
                 {
-                    delete value;
-                    return NULL;
+                    //delete value;
+                    return nullptr;
                 }
                 cout << "Array ok" << endl;
-                result = new Element(Element_Type{ARRAY}, value);
+                unique_ptr<void, void(*)(void*)> new_val(value.release(), [](void* ptr)
+                    {
+                        delete (vector<unique_ptr<Element>>*)ptr;
+                    });
+                result = make_unique<Element>(Element_Type{ARRAY}, move(new_val));
                 cout << "Array result ok" << endl;
                 break;
             }
             case 't':
             {
                 cout << "True" << endl;
-                input->unget();
+                input.unget();
                 string value;
-                (*input) >> value;
+                input >> value;
                 if(value == "true," || value == "true}")
                 {
-                    input->unget();
+                    input.unget();
                 }
                 else if(value != "true")
-                    return NULL;
-
-                result = new Element(Element_Type{OB_TRUE}, NULL);
+                    return nullptr;
+                unique_ptr<void, void(*)(void*)> new_val(new bool , [](void* ptr)
+                    {
+                        delete (bool*) ptr;
+                    });
+                result = make_unique<Element>(Element_Type{OB_TRUE}, move(new_val));
                 break;
             }
             case 'f':
             {
                 cout << "False" << endl;
-                input->unget();
+                input.unget();
                 string value;
-                (*input) >> value;
+                input >> value;
                 if(value == "false," || value == "false}")
                 {
-                    input->unget();
+                    input.unget();
                 }
                 else if(value != "false")
-                    return NULL;
+                    return nullptr;
 
-                result = new Element(Element_Type{OB_FALSE}, NULL);
+                unique_ptr<void, void(*)(void*)> new_val(new bool, [](void* ptr)
+                    {
+                        delete (bool*) ptr;
+                    });
+                result = make_unique<Element>(Element_Type{OB_FALSE}, move(new_val));
                 break;
             }
             case 'n':
             {
                 cout << "Null" << endl;
-                input->unget();
+                input.unget();
                 string value;
-                (*input) >> value;
+                input >> value;
                 if(value == "null," || value == "null}")
                 {
-                    input->unget();
+                    input.unget();
                 }
                 else if(value != "null")
-                    return NULL;
+                    return nullptr;
 
-                result = new Element(Element_Type{OB_NULL}, NULL);
+                unique_ptr<void, void(*)(void*)> new_val(new bool, [](void* ptr)
+                    {
+                        delete (bool*) ptr;
+                    });
+                result = make_unique<Element>(Element_Type{OB_NULL}, move(new_val));
                 break;
             }
             default:
             {
                 cout << "Non" << endl;
-                return NULL;
+                return nullptr;
             }
         }
     }
@@ -261,86 +287,87 @@ static Element *scanEl(stringstream *input)
     return result;
 }
 
-static vector<Object_field *> *scanObj(stringstream *input)
+static unique_ptr<vector<unique_ptr<Object_field>>> scanObj(stringstream &input)
 {
     cout << "Scan obj" << endl;
-    vector <Object_field *> *result = new vector<Object_field *>;
+    unique_ptr<vector <unique_ptr<Object_field>>> result = make_unique<vector<unique_ptr<Object_field>>>();
 
     char ch;
-    while(input->get(ch))
+    while(input.get(ch))
     {
         if(ch != ' ' && ch != '\n' && ch != '\t')
         {
-            input->unget();
+            input.unget();
             break;
         }
     }
-    while(input->get(ch))
+    while(input.get(ch))
     {
         cout << "Char while = \"" << ch << "\"" << endl;
-        input->unget();
-        while(input->get(ch))
+        input.unget();
+        while(input.get(ch))
             if(ch != ' ' && ch != '\n' && ch != '\t')
                 break;
 
         cout << "Char:\'" << ch << "\'" << endl;
         if(ch == '}')
-            return result;
+            return move(result);
         else if(ch != ',' && ch != '{')
         {
-            delete result;
-            return NULL;
+            //delete result;
+            return nullptr;
         }
         cout << "Continuation" << endl;
-        string *key;
-        if((key = scanStr(input)) == NULL)
+        unique_ptr<string> key;
+        if((key = scanStr(input)).get() == nullptr)
         {
-            delete result;
-            return NULL;
+            //delete result;
+            return nullptr;
         }
         cout << "Key:\"" << *key << "\"" << endl;
         char c;
-        (*input) >> c;
+        input >> c;
         if(c != ':')
         {
-            delete key;
-            delete result;
-            return NULL;
+            //delete key;
+            //delete result;
+            return nullptr;
         }
         cout << "Char del:\'" << c << "\'" << endl;
 
-        Element *value;
-        if((value = scanEl(input)) == NULL)
+        unique_ptr<Element> value;
+        if((value = scanEl(input)).get() == nullptr)
         {
-            delete key;
-            delete result;
-            return NULL;
+            //delete key;
+            //delete result;
+            return nullptr;
         }
         cout << "Value ok" << endl;
         //if(value->type == NUMBER)
             //cout << "Value double=" << *((double *)value->value) << endl;
-        Object_field *obj_f = new Object_field(*key, value);
-        result->push_back(obj_f);
+
+        unique_ptr<Object_field> obj_f = make_unique<Object_field>(*key, move(value));
+        result->push_back(move(obj_f));
         cout << "Push ok" << endl;
-        delete key;
+        //delete key;
         cout << "Next key + val" << endl;
     }
 
-    delete result;
-    return NULL;
+    //delete result;
+    return nullptr;
 }
 
-static bool checkCorrect(vector<string> *dataVector)
+static bool checkCorrect(vector<string> &dataVector)
 {
     string full;
-    for(string i : *dataVector)
+    for(string i : dataVector)
         full += i + '\n';
 
     stringstream json_stream(full);
-    Element *res;
-    if((res = scanEl(&json_stream)) == NULL)
+    unique_ptr<Element> res;
+    if((res = scanEl(json_stream)).get() == nullptr)
         return false;
-    delete res;
+    //delete res;
     return true;
 }
 

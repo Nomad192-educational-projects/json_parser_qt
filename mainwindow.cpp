@@ -15,24 +15,24 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_file_clicked()
 {
-    QFile *f = new QFile(QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("Data Files (*.json)")));
-    if(f->fileName().isNull())
+    QFile f (QFileDialog::getOpenFileName(this,tr("Open File"),"",tr("Data Files (*.json)")));
+    if(f.fileName().isNull())
     {
         ui->textBrowser_name_file->setText("No file celected!");
     }
     else
     {
-        QFileInfo fileInfo(f->fileName());
+        QFileInfo fileInfo(f.fileName());
         ui->textBrowser_name_file->setText(fileInfo.fileName());
-        string name = (f->fileName()).toStdString();
+        string name = (f.fileName()).toStdString();
 
-        if (!interfaceBundle(OPEN_FILE, &name, NULL, &dataVector))
+        dataVector.clear();
+        if (!interfaceBundle(OPEN_FILE, name, dataVector))
         {
-            ui->textBrowser_name_file->setText(f->errorString());
-            qDebug() << f->errorString();
+            ui->textBrowser_name_file->setText(f.errorString());
+            qDebug() << f.errorString();
         }
     }
-    delete f;
     print_json();
 }
 
@@ -46,7 +46,7 @@ void MainWindow::print_json()
 
 void MainWindow::on_pushButton_check_clicked()
 {
-    if (!interfaceBundle(CHECK, NULL, NULL, &dataVector))
+    if (!interfaceBundle(CHECK, "", dataVector))
     {
         ui->textBrowser_name_file->setText("Error check");
     }
