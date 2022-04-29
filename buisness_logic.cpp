@@ -367,6 +367,11 @@ static bool checkCorrect(vector<string> &dataVector)
     unique_ptr<Element> res;
     if((res = scanEl(json_stream)).get() == nullptr)
         return false;
+
+    char ch;
+    while(json_stream.get(ch))
+        if(ch != ' ' && ch != '\n' && ch != '\t')
+            return false;
     //delete res;
     return true;
 }
