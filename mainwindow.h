@@ -2,10 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QFile>
-#include <QFileDialog>
+#include <vector>
 #include <string>
-#include "buisness_logic.h"
 
 using namespace std;
 

@@ -1,5 +1,10 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
+#include "ui_mainwindow.h"
+
+#include <QFile>
+#include <QFileDialog>
+#include <QDebug>
+#include "buisness_logic.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -39,8 +44,8 @@ void MainWindow::on_pushButton_file_clicked()
 void MainWindow::print_json()
 {
     QString text;
-    for(string i : dataVector)
-        text.append(QString::fromStdString(i) + "\n");
+    for(string &i : dataVector)
+        text.append(QString::fromStdString(i) + '\n');
     ui->json_text->setText(text);
 }
 

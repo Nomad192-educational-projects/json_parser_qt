@@ -1,11 +1,8 @@
-#include <fstream>
-
 #include "buisness_logic.h"
 #include "json_lambda.h"
+#include <fstream>
 
 using namespace std;
-
-
 
 static bool openFile(string nameFile,  vector<string> &dataVector);
 
@@ -19,7 +16,7 @@ bool interfaceBundle(enum compilation comp, string nameFile,  vector<string> &da
 }
 
 static bool openFile(string nameFile, vector<string> &dataVector){
-    fstream dataFile(nameFile, ios::in);
+    fstream dataFile(nameFile);
     bool result = false;
     if(dataFile.is_open()){
         result = true;

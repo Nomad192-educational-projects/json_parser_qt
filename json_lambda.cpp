@@ -309,7 +309,7 @@ bool checkCorrect(vector<string> &dataVector)
 {
     string full;
     for(string &i : dataVector)
-        full += i + '\n';
+        full += i + '\n'];
 
     stringstream json_stream(full);
     unique_ptr<Element> res;
