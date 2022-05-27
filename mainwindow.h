@@ -1,11 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <vector>
 #include <string>
-
-using namespace std;
+#include <vector>
+#include <QMainWindow>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -21,12 +19,12 @@ public:
 
 private slots:
     void on_pushButton_file_clicked();
-
     void on_pushButton_check_clicked();
 
 private:
     Ui::MainWindow *ui;
-    vector<string> dataVector;
+    std::vector <std::string> dataVector;
+
     void print_json();
 };
 #endif // MAINWINDOW_H

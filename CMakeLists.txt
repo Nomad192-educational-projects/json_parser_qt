@@ -15,10 +15,11 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 
 set(PROJECT_SOURCES
-        main.cpp
-        json_lambda.h json_lambda.cpp
-        buisness_logic.cpp buisness_logic.h
+        jsonError.cpp jsonError.h
+        jsonParser.cpp jsonParser.h
+        fasade.cpp fasade.h
         mainwindow.cpp mainwindow.h mainwindow.ui
+        main.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -38,8 +39,6 @@ else()
 # Define properties for Android with Qt 5 after find_package() calls as:
 #    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
-        add_definitions(-DJSON_LAMBDA = 1)
-        add_definitions(-DMETHOD = 2)
         add_executable(json_parser
             ${PROJECT_SOURCES}
         )
