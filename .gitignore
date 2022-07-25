@@ -9,3 +9,4 @@
 !/.git*
 !/CMakeLists.txt
 !/README.md
+!/data.json
