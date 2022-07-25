@@ -1,4 +1,7 @@
 *
+!/assets
+!/assets/*
+!/assets/*/*
 !/*.c
 !/*.cpp
 !/*.h
